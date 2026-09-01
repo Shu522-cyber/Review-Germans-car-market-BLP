@@ -1,25 +1,25 @@
 library(AER)
+library(here)
 library(tidyverse)
 library(data.table)
 library(ggplot2)
 
-dfc <- data.frame(fread("/Users/ishimare/Desktop/cardata.csv")) # Copy the pathway of the file
-                                                                # 正式版會置換成瀏覽者的裝置路徑
-# dfc$class <- str_squish(dfc$class)
+dfc <- fread(here("data", "cardata.csv"))
+
 #--- Session 1: Modify the database ---#
 dfc <- dfc %>%
   
   group_by(year) %>% 
   
-  mutate(market_size = hh/4) %>% # mutate(): Create or transform variables:market_size while preserving the original data structure.
+  mutate(market_size = hh/4) %>% 
   
-  mutate(share = quantity / market_size) %>% # Create variabls: share while preserving the original data structure.
+  mutate(share = quantity / market_size) %>% 
   
-  mutate(outshare = 1 - sum(share)) %>% # mutate(): Create new variable outshare as the share of consumers who bought no car (outside good share = 1 minus total inside shares).
+  mutate(outshare = 1 - sum(share)) %>% 
   
-  mutate(lhs = log(share / outshare))  %>% # muatae(): Create new variable "lhs" as the relative utility between targeted good and outside options of it.
+  mutate(lhs = log(share / outshare))  %>% 
   
-  ungroup() # ungroup(): Remove grouping metadata to ensure subsequent operations apply to the entire dataset
+  ungroup() 
 
 # Establishing 8 instrument variables: 
 dfc <- dfc %>% 
@@ -35,20 +35,20 @@ dfc <- dfc %>%
   
   group_by(year) %>% 
   
-  mutate(all_fueleff = sum(fueleff), # Calculate total market-wide fuel efficiency for each year
-         all_kw = sum(kw),  # Calculate total market-wide kilowatts for each year
-         all_cylinders = sum(cylinders), # Calculate total market-wide cylinders for each year
-         all_footprint = sum(footprint)) # Calculate total market-wide footprint for each year
+  mutate(all_fueleff = sum(fueleff), 
+         all_kw = sum(kw),  
+         all_cylinders = sum(cylinders), 
+         all_footprint = sum(footprint)) 
 
-dfc$IV_fueleff_intra <- (dfc$firm_fueleff - dfc$fueleff) / 10000 # Create now column: Intra-firm IV for fuel efficiency
-dfc$IV_kw_intra <- (dfc$firm_kw - dfc$kw) / 10000 # Create now column: Intra-firm IV for kilowatts
-dfc$IV_cylinders_intra <- (dfc$firm_cylinders - dfc$cylinders) / 10000 # Create now column: Intra-firm IV for cyklinders
-dfc$IV_footprint_intra <- (dfc$firm_footprint - dfc$footprint) / 10000 # Create now column: Intra-firm IV for footprints
+dfc$IV_fueleff_intra <- (dfc$firm_fueleff - dfc$fueleff) / 10000 
+dfc$IV_kw_intra <- (dfc$firm_kw - dfc$kw) / 10000 
+dfc$IV_cylinders_intra <- (dfc$firm_cylinders - dfc$cylinders) / 10000 
+dfc$IV_footprint_intra <- (dfc$firm_footprint - dfc$footprint) / 10000 
 
-dfc$IV_fueleff_rival <- (dfc$all_fueleff - dfc$firm_fueleff) / 10000 # Create now column: Inter-firm IV for fuel efficiency
-dfc$IV_kw_rival <- (dfc$all_kw - dfc$firm_kw) / 10000 # Create now column: Inter-firm IV for kilowatts
-dfc$IV_cylinders_rival <- (dfc$all_cylinders - dfc$firm_cylinders) / 10000 # Create now column: Inter-firm IV for cylinders
-dfc$IV_footprint_rival <- (dfc$all_footprint - dfc$firm_footprint) / 10000 # Create now column: Inter-firm IV for footprint
+dfc$IV_fueleff_rival <- (dfc$all_fueleff - dfc$firm_fueleff) / 10000 
+dfc$IV_kw_rival <- (dfc$all_kw - dfc$firm_kw) / 10000 
+dfc$IV_cylinders_rival <- (dfc$all_cylinders - dfc$firm_cylinders) / 10000 
+dfc$IV_footprint_rival <- (dfc$all_footprint - dfc$firm_footprint) / 10000 
 
 #--- Session 2: 2SLS  ---#
 
@@ -142,7 +142,7 @@ df17m_post <- df17m
 df17m_post$firm[df17m_post$firm %in% c("PSA", "FCA")] <- "Stellantis"
 omega_m4_post <- outer(df17m_post$firm, df17m_post$firm, FUN = "==") * 1
 
-price_in <- df17m$price
+price_in  <- df17m$price
 repeat{
   
   #Step 1: new share after merge
@@ -217,8 +217,6 @@ BLP_NL <- ivreg(lhs ~ price + lwgshare + fueleff + kw + cylinders + weight + foo
                   IV_footprint_intra + IV_footprint_rival +  # BLP instruments
                   IVnest_IntraFE + IVnest_RivalFE, data = dfc)
   
-
-
 summary(BLP_NL, diagnostics = TRUE)
 
 alpha_nl <- as.numeric(coefficients(BLP_NL)[2])
@@ -305,29 +303,29 @@ elasticities_17 <- elas17[target_idx, target_idx]
 
 # 5-4: Visualization 
 
-# 步驟1：先算出車款對應的class資訊，這是elas_df排序時需要用到的參照表
+# STEP 1:
 car_class_lookup <- data_list[["2017"]] %>%
   filter(paste(brand, model, fueltype, kw, sep = "_") %in% rownames(elasticities_17)) %>%
   transmute(id_t = paste(brand, model, fueltype, kw, sep = "_"), class) %>%
   distinct()
 
-# 步驟2：依照class排序，讓同nest的車彼此相鄰
+# STEP 2: 
 ordered_ids <- car_class_lookup %>%
   arrange(class, id_t) %>%
   pull(id_t)
 
-# 步驟3：把矩陣轉成long format，並套用上面決定好的排序
+# STEP 3:
 elas_df <- as.data.frame(elasticities_17) %>%
   rownames_to_column("row_car") %>%
   pivot_longer(-row_car, names_to = "col_car", values_to = "elasticity") %>%
   mutate(
     row_car = factor(row_car, levels = ordered_ids),
     col_car = factor(col_car, levels = ordered_ids),
-    # log-modulus transform：保留正負號，同時壓縮尺度差異，讓小數值的cross-elasticity也看得出顏色深淺
+    
     elasticity_trans = sign(elasticity) * log1p(abs(elasticity))
   )
 
-# 步驟4：畫圖
+# STEP 4:
 ggplot(elas_df, aes(x = col_car, y = row_car, fill = elasticity_trans)) +
   geom_tile(color = "white", linewidth = 0.5) +
   geom_text(aes(label = sprintf("%.3f", elasticity)), size = 2.3, color = "black") +
@@ -335,7 +333,7 @@ ggplot(elas_df, aes(x = col_car, y = row_car, fill = elasticity_trans)) +
     low = "steelblue", mid = "white", high = "firebrick",
     midpoint = 0, name = "elasticity\n(log-scaled)"
   ) +
-  scale_y_discrete(limits = rev) +   # 讓row順序由上到下對應矩陣視覺習慣
+  scale_y_discrete(limits = rev) +   
   labs(
     title = "2017 FCA-PSA Case：Cross-Price Elasticity Matrix basing on nested classess ordering",
     x = NULL, y = NULL
@@ -505,7 +503,29 @@ ggsave("elasticity_heatmap_2017.png", width = 10, height = 8, dpi = 300)
     group_by(same_class_as_merger) %>%
     summarise(mean_pct = mean(pct_change), median_pct = median(pct_change), n = n())
 
+#--- Session 6: Conclusion ---# 
+Stellantis_idx <- df17m$firm %in% c("FCA", "PSA")
+
+table_post_merge <- data.frame(
   
+  Variable = c("Mean price", "Mean price, stellantis", "Mean price, out of merging firms",
+               "Mean markup", "Mean markup, Stellantis", "Mean markup, out of merging firms",
+               "Consumer Surplus"), 
+  
+  Simple_Logit = c(
+    mean(price_out)*1000, mean(price_out[Stellantis_idx])*1000, mean(price_out[!Stellantis_idx])*1000, 
+    mean(markup_merger)*1000, mean(markup_merger[Stellantis_idx])*1000, mean(markup_merger[!Stellantis_idx])*1000, 
+    CS_simple_logit_merge
+  ),
+  
+  Nested_Logit = c(
+    mean(res_Stellantis[["price"]])*1000, mean(res_Stellantis[["price"]][Stellantis_idx])*1000, mean(res_Stellantis[["price"]][!Stellantis_idx])*1000, 
+    mean(res_Stellantis[["markup"]])*1000, mean(res_Stellantis[["markup"]][Stellantis_idx])*1000, mean(res_Stellantis[["markup"]][!Stellantis_idx])*1000,
+    res_Stellantis[["CS"]]
+  )
+)
+  
+print(table_post_merge)
   
 # EXTRA: Verification for the correctness of the model
 
@@ -514,7 +534,6 @@ ggsave("elasticity_heatmap_2017.png", width = 10, height = 8, dpi = 300)
     group_by(year) %>%
     summarise(total_inside_share = sum(share), outshare_check = 1 - sum(share)) %>%
     print()
-  # outshare_check 應該全部是正值，且不會離0太近（不會有市場幾乎被inside goods佔滿的情況）
   
   # 2:
   which(mc_pre < 0)
@@ -535,6 +554,3 @@ ggsave("elasticity_heatmap_2017.png", width = 10, height = 8, dpi = 300)
     group_by(is_merging) %>%
     summarise(mean_pct = mean(pct_change), median_pct = median(pct_change),
               max_pct = max(pct_change), min_pct = min(pct_change), n = n())
-
-              
-  

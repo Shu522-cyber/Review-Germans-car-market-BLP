@@ -1,0 +1,73 @@
+---
+title: "FCA–PSA Merger Simulation in the German Automobile Market"
+author: "Shu-pu, Chang"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+# 1. Executive Summary
+
+This project presents the unilateral effects of a hypothetical FCA-PSA merger ("Stellantis" merge case in 2020) in the German automobile market. The analysis estimates demand for the differentiated products using instrument-variable method and nested-logit framework. The estimated demand system is then combined with a differentiated-products pricing model to simulate the post-merger equilibrium.
+
+Our results firstly suggest that both the prices and market shares of the products increase in different extent, while this kind of the tendency been showed more significantly for those products from merging firms. Moreover, it also suggest that the nested-logit framework simulation could better fit model, as it demonstrate the outcomes closer to post-merger situation in reality.
+
+# 2. Research Question and Economic Motivation
+
+Our main research question focus on :
+
+1.  How would a hypothetical FCA--PSA merger affect equilibrium prices,
+2.  markups, and consumer welfare in the German automobile market?
+
+The analysis is motivated by the economics of horizontal mergers in differentiated-product markets. When two firms producing differentiated products merge, the internalization of substitution between their products may increase the merged firm's incentive to raise prices.
+
+The magnitude of this effect depends critically on the degree of substitution between the merging products and their competitors. Therefore, estimating cross-price elasticities is an important component of the analysis.
+
+# 3. Data
+
+## 3.1 Data Description
+
+The dataset contains observations on automobile products in the German market between 2012 and 2017. The main variables used in the analysis include product prices, quantities, vehicle characteristics, firms, brands, and vehicle classes.
+
+## 3.2 Market Definition
+
+## 3.3 Descriptive Statistics
+
+# 4. Empirical Methodology
+
+## 4.1 Demand Estimation
+
+## 4.2 Instrumental Variables
+
+## 4.3 Simple Logit
+
+## 4.4 Nested Logit
+
+## 4.5 Supply Side and Markups
+
+# 5. Demand Estimation Results
+
+# 6. Price Elasticities and Competitive Substitution
+
+# 7. FCA--PSA Merger Simulation
+
+## 7.1 Pre-Merger Equilibrium
+
+## 7.2 Post-Merger Ownership Structure
+
+## 7.3 Equilibrium Price Adjustment
+
+## 7.4 Price and Markup Effects
+
+# 8. Consumer Welfare
+
+# 9. Robustness Analysis
+
+## 9.1 Simple Logit vs. Nested Logit
+
+## 9.2 Sensitivity Analysis
+
+# 10. Conclusion
