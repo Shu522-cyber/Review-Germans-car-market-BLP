@@ -2,8 +2,10 @@ library(AER)
 library(here)
 library(tidyverse)
 library(data.table)
-library(ggplot2)
 
+library(stargazer)
+library(ggplot2)
+library(knitr)
 dfc <- fread(here("data", "cardata.csv"))
 
 #--- Session 1: Modify the database ---#

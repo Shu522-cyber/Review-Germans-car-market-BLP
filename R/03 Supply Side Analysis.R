@@ -40,3 +40,13 @@ for (j in 1:length(market_vec)) {
 mc_ols <- lm(mc ~ price + weight + fueleff + kw + footprint + cylinders +
                factor(model) + factor(class) + factor(brand) + factor(year)  + factor(body), 
              data = dfc)
+
+stargazer(
+  BLP, mc_ols, 
+  type = "text",
+  dep.var.labels = c("delta", "marginal cost"), 
+  omit = c("brand", "class", "body", "model"),           
+  digits = 3,                                   
+  header = FALSE,
+  out = "output/Tables/table_D&S_analysis_simple_logit.tex"
+)

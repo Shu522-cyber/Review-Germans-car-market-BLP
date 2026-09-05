@@ -4,7 +4,7 @@ df17 <- data_list[["2017"]]
 elas17 <- elasticities_list[["2017"]]
 
 target_idx <- which(
-  (df17$brand == "Fiat"           & df17$model == "500C"      & df17$fueltype == "gasoline" & df17$kw == 5.1) |
+    (df17$brand == "Fiat"           & df17$model == "500C"      & df17$fueltype == "gasoline" & df17$kw == 5.1) |
     (df17$brand == "Fiat"           & df17$model == "Panda"     & df17$fueltype == "gasoline" & df17$kw == 5.1) |
     (df17$brand == "Abarth"         & df17$model == "595C/695C" & df17$fueltype == "gasoline" & df17$kw == 13.2) |
     (df17$brand == "Peugeot"        & df17$model == "208"       & df17$fueltype == "gasoline" & df17$kw == 6.0) |

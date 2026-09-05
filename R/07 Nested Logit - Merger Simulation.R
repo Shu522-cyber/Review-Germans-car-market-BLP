@@ -35,7 +35,7 @@ for (j in 1:n17){
 # Markup (Generate variables: mc_pre)
 markup_nest_pre17 <- as.numeric(-solve(derivative_nest_pre * own_nest_pre) %*% df17$share)
 mc_nest_pre17 <- df17$price - markup_nest_pre17
-lerner_nest <- markup_nest_pre17 / df17$price
+lerner_nest_pre <- markup_nest_pre17 / df17$price
 
 # 7-2: Consumer Surplus
 delta_nl <- df17$lhs - sigma_nl * df17$lwgshare
@@ -44,7 +44,7 @@ nest_sum_preM <- tapply(exp_nl_preM, df17$class, sum)
 
 eta_nest_preM <- (1 - sigma_nl) * log(nest_sum_preM)
 
-CS <- (1 / abs(alpha_nl)) * log(1 + sum(exp(eta_nest_preM))) * 1000
+CS_pre_nest <- (1 / abs(alpha_nl)) * log(1 + sum(exp(eta_nest_preM))) * 1000
 
 # 7-3: Merge, establishing the function for processes
 
@@ -123,6 +123,52 @@ dfM_nl$firm[dfM_nl$firm %in% c("FCA", "PSA")] <- "Stellantis"
 res_Stellantis <- simulate_M_nl(dfM_nl, mc_nest_pre17, alpha_nl, sigma_nl, delta_nl_17)
 
 # 7-5: Comparison / Verification
+
+Stellantis_idx <- df17m$firm %in% c("FCA", "PSA")
+
+table_nl_merger <- data.frame(
+  
+  Variables = c(
+    "Mean price for every products", "Mean price, Stellantis (FCA + PSA)", "Mean price, outsiders of Stellantis", 
+    "Mean markup for every products", "Mean markup, Stellantis (FCA + PSA)", "Mean markup, outsiders of Stellantis", 
+    
+    "Lerner Index", "Consumer Index"
+  ), 
+  
+  Ante_merge = c(
+    mean(df17$price)*1000, mean(df17$price[Stellantis_idx])*1000, mean(df17$price[!Stellantis_idx])*1000,
+    mean(markup_nest_pre17)*1000, mean(markup_nest_pre17[Stellantis_idx])*1000, mean(markup_nest_pre17[!Stellantis_idx])*1000, 
+    mean(lerner_nest_pre), CS
+  ),
+  
+  Post_merge = c(
+    mean(res_Stellantis[["price"]])*1000, mean(res_Stellantis[["price"]][Stellantis_idx])*1000, mean(res_Stellantis[["price"]][!Stellantis_idx])*1000, 
+    mean(res_Stellantis[["markup"]])*1000, mean(res_Stellantis[["markup"]][Stellantis_idx])*1000, mean(res_Stellantis[["markup"]][!Stellantis_idx])*1000,
+    mean(res_Stellantis[["lerner"]]), res_Stellantis[["CS"]]
+  ), 
+  
+  Diff_in_percentage = c(
+    ((mean(res_Stellantis[["price"]]) - mean(df17$price)) / mean(df17$price))*100, ((mean(res_Stellantis[["price"]][Stellantis_idx]) - mean(df17$price[Stellantis_idx])) / mean(df17$price[Stellantis_idx]))*100,
+    ((mean(res_Stellantis[["price"]][!Stellantis_idx]) - mean(df17$price[!Stellantis_idx])) / mean(df17$price[!Stellantis_idx]))*100, 
+    
+    ((mean(res_Stellantis[["markup"]]) - mean(markup_nest_pre17)) / mean(markup_nest_pre17))*100, ((mean(res_Stellantis[["markup"]][Stellantis_idx]) - mean(markup_nest_pre17[Stellantis_idx])) / mean(markup_nest_pre17[Stellantis_idx]))*100, 
+    ((mean(res_Stellantis[["markup"]][!Stellantis_idx]) - mean(markup_nest_pre17[!Stellantis_idx])) / mean(markup_nest_pre17[!Stellantis_idx]))*100, 
+    
+    ((mean(res_Stellantis[["lerner"]]) - mean(lerner_nest_pre)) / mean(lerner_nest_pre))*100, ((res_Stellantis[["CS"]] - CS_pre_nest) / CS_pre_nest)*100
+  )
+)
+
+kable(table_nl_merger, caption = "[Nested Logit] The evaluation of hypothetical mergering case: Stellantis in 2017")
+
+stargazer(table_nl_merger, 
+          type = "text", 
+          out = "output/Tables/table_merger_simulation_nested_logit.tex", 
+          summary = FALSE, 
+          rownames = FALSE)
+
+View(table_nl_merger)
+
+# 7-6: Extra: Check the validity of the results
 comparison <- data.frame(
   id            = paste(df17$brand, df17$model, df17$fueltype, df17$kw, sep = "_"),
   firm          = df17$firm,

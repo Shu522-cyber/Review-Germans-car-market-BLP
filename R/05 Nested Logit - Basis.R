@@ -110,3 +110,19 @@ for (t in unique(dfc$year)){
 }
 
 mc_nl <- dfc$price - markup_nl
+
+mc_nl_ols <- lm(mc_nl ~ fueleff + kw + cylinders + weight + footprint +
+               factor(year) + factor(brand) + factor(fueltype) +
+               factor(class) + factor(body),
+             data = dfc)
+summary(mc_nl_ols, diagnostics = TRUE)
+
+stargazer(
+  BLP_NL, mc_nl_ols, 
+  type = "text",
+  dep.var.labels = c("delta", "marginal cost"), 
+  omit = c("brand", "class", "body", "model"),           
+  digits = 3,                                   
+  header = FALSE,
+  out = "output/Tables/table_D&S_analysis_nested.tex"
+)
